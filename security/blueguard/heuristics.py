@@ -76,6 +76,10 @@ class SecurityHeuristics:
         """Analyze text for security threats"""
         threats = []
         
+        # Ensure text is a string
+        if not isinstance(text, str):
+            return threats
+        
         for threat_type, patterns in self.threat_patterns.items():
             for pattern in patterns:
                 matches = re.finditer(pattern, text, re.IGNORECASE | re.DOTALL)

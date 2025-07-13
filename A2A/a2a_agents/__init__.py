@@ -1,6 +1,6 @@
 """
-Real A2A Agents for BlueGuard Security System
-Agents using Real A2A SDK implementation
+A2A Agents for BlueGuard Security System
+Agents following Google A2A protocol standards
 """
 
 from .math_agent import MathAgent

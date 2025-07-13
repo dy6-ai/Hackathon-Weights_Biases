@@ -9,7 +9,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from .heuristics import SecurityHeuristics
+from heuristics import SecurityHeuristics
 # REMOVED: from .a2a_threat_detector import A2AThreatDetector
 
 logger = logging.getLogger(__name__)
@@ -40,12 +40,19 @@ class BlueGuard:
         timestamp = interaction.get("timestamp")
         if agent_id not in self.agent_data_flow:
             self.agent_data_flow[agent_id] = []
+        
+        # Convert result to string for tracking
+        if isinstance(result, dict):
+            result_str = str(result.get("content", result))
+        else:
+            result_str = str(result)
+        
         self.agent_data_flow[agent_id].append({
             "timestamp": timestamp,
-            "result": result,
+            "result": result_str,
             "tool": interaction.get("tool")
         })
-        logger.debug(f"Tracked data flow for {agent_id}: {result[:50]}...")
+        logger.debug(f"Tracked data flow for {agent_id}: {result_str[:50]}...")
 
     def detect_cross_agent_threats(self, interaction: Dict[str, Any]) -> List[Dict[str, Any]]:
         threats = []
@@ -140,6 +147,10 @@ class BlueGuard:
         """Analyze a single agent interaction for security threats including A2A threats"""
         threats = []
         
+        # Check if this is an agent card analysis
+        if interaction.get("analysis_type") == "agent_card":
+            return await self.analyze_agent_card(interaction)
+        
         # Track data flow for A2A threat detection
         self.track_data_flow(interaction)
         
@@ -155,6 +166,12 @@ class BlueGuard:
         if isinstance(result, str):
             result_threats = self.heuristics.analyze_text(result, "result")
             threats.extend(result_threats)
+        elif isinstance(result, dict):
+            # If result is a dict, analyze its content field
+            content = result.get("content", "")
+            if isinstance(content, str):
+                result_threats = self.heuristics.analyze_text(content, "result_content")
+                threats.extend(result_threats)
         
         # Detect cross-agent threats
         cross_agent_threats = self.detect_cross_agent_threats(interaction)
@@ -190,7 +207,49 @@ class BlueGuard:
             logger.warning(f"Security threats detected in {interaction.get('agent_id')}: {len(threats)} threats")
         
         return threats
-    
+
+    async def analyze_agent_card(self, interaction: Dict[str, Any]) -> List[str]:
+        """Analyze agent card for security threats"""
+        threats = []
+        agent_id = interaction.get("agent_id")
+        content = interaction.get("content", "")
+        
+        if not content:
+            return threats
+        
+        # Analyze the agent card content for threats
+        card_threats = self.heuristics.analyze_text(content, f"agent_card:{agent_id}")
+        
+        if card_threats:
+            threats.extend(card_threats)
+            
+            # Log security event for agent card threats
+            event = {
+                "timestamp": datetime.now().isoformat(),
+                "agent_id": agent_id,
+                "analysis_type": "agent_card",
+                "threats": card_threats,
+                "content": content,
+                "has_cross_agent_threats": False
+            }
+            self.security_events.append(event)
+            
+            # Create alert for agent card threats
+            alert = {
+                "timestamp": datetime.now().isoformat(),
+                "severity": "high" if any(t.get("severity") == "high" for t in card_threats) else "medium",
+                "description": f"Security threats detected in {agent_id} agent card",
+                "threats": card_threats,
+                "agent_id": agent_id,
+                "tool": "agent_card",
+                "cross_agent": False
+            }
+            self.alerts.append(alert)
+            
+            logger.warning(f"Security threats detected in {agent_id} agent card: {len(card_threats)} threats")
+        
+        return threats
+
     async def analyze_interaction_log(self, interactions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze entire interaction log for security threats including A2A threats"""
         total_threats = 0
