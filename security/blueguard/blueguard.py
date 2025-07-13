@@ -28,8 +28,8 @@ class BlueGuard:
         # --- End merged A2AThreatDetector state ---
         
         # Create logs directory
-        Path("src/logs").mkdir(exist_ok=True)
-        Path("src/reports").mkdir(exist_ok=True)
+        Path("logs").mkdir(exist_ok=True)
+        Path("reports").mkdir(exist_ok=True)
         
         logger.info("BlueGuard security monitoring initialized with unified threat detection")
 

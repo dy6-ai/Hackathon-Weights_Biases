@@ -10,14 +10,14 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from a2a_protocol.a2a_server import A2AServer
-from a2a_protocol.a2a_client import A2AClient
-from a2a_agents import MathAgent, WeatherAgent, TranslationAgent, MaliciousAgent
+from A2A.a2a_protocol.a2a_server import A2AServer
+from A2A.a2a_protocol.a2a_client import A2AClient
+from A2A.a2a_agents import MathAgent, WeatherAgent, TranslationAgent, MaliciousAgent
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'security', 'blueguard'))
-from blueguard import BlueGuard
-from report_generator import SecurityReportGenerator
+from security.blueguard.blueguard import BlueGuard
+from security.blueguard.report_generator import SecurityReportGenerator
 
 # Ensure logs and reports directories exist
 Path("logs").mkdir(exist_ok=True)

@@ -16,7 +16,7 @@ class SecurityReportGenerator:
     
     def __init__(self):
         # Create reports directory
-        Path("src/reports").mkdir(exist_ok=True)
+        Path("reports").mkdir(exist_ok=True)
         logger.info("Security Report Generator initialized")
     
     def generate_human_readable_report(self, security_data: Dict[str, Any]) -> str:

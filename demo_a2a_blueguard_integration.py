@@ -7,7 +7,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from src.a2a_mcp_server_protocol import A2AMCPServer
+from A2A.a2a_mcp_server_protocol import A2AMCPServer
 
 # Configure logging
 logging.basicConfig(
