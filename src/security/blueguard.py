@@ -1,6 +1,6 @@
 """
 BlueGuard Security Monitoring System
-Monitors agent interactions for security threats
+Monitors agent interactions for security threats including agent-to-agent communication
 """
 
 import json
@@ -10,26 +10,32 @@ from datetime import datetime
 from pathlib import Path
 
 from .heuristics import SecurityHeuristics
+from .a2a_threat_detector import A2AThreatDetector
 
 logger = logging.getLogger(__name__)
 
 class BlueGuard:
-    """BlueGuard security monitoring system"""
+    """BlueGuard security monitoring system with A2A threat detection"""
     
     def __init__(self):
         self.heuristics = SecurityHeuristics()
+        self.a2a_detector = A2AThreatDetector()
         self.security_events = []
         self.alerts = []
+        self.cross_agent_threats = []
         
         # Create logs directory
         Path("src/logs").mkdir(exist_ok=True)
         Path("src/reports").mkdir(exist_ok=True)
         
-        logger.info("BlueGuard security monitoring initialized")
+        logger.info("BlueGuard security monitoring initialized with A2A threat detection")
     
     async def analyze_interaction(self, interaction: Dict[str, Any]) -> List[str]:
-        """Analyze a single agent interaction for security threats"""
+        """Analyze a single agent interaction for security threats including A2A threats"""
         threats = []
+        
+        # Track data flow for A2A threat detection
+        self.a2a_detector.track_data_flow(interaction)
         
         # Analyze parameters
         params = interaction.get("params", {})
@@ -44,6 +50,13 @@ class BlueGuard:
             result_threats = self.heuristics.analyze_text(result, "result")
             threats.extend(result_threats)
         
+        # Detect cross-agent threats
+        cross_agent_threats = self.a2a_detector.detect_cross_agent_threats(interaction)
+        if cross_agent_threats:
+            threats.extend(cross_agent_threats)
+            self.cross_agent_threats.extend(cross_agent_threats)
+            logger.warning(f"Cross-agent threats detected in {interaction.get('agent_id')}: {len(cross_agent_threats)} threats")
+        
         # Log security events
         if threats:
             event = {
@@ -51,7 +64,8 @@ class BlueGuard:
                 "agent_id": interaction.get("agent_id"),
                 "tool": interaction.get("tool"),
                 "threats": threats,
-                "interaction": interaction
+                "interaction": interaction,
+                "has_cross_agent_threats": any(t.get("cross_agent", False) for t in threats)
             }
             self.security_events.append(event)
             
@@ -62,7 +76,8 @@ class BlueGuard:
                 "description": f"Security threats detected in {interaction.get('agent_id')} interaction",
                 "threats": threats,
                 "agent_id": interaction.get("agent_id"),
-                "tool": interaction.get("tool")
+                "tool": interaction.get("tool"),
+                "cross_agent": any(t.get("cross_agent", False) for t in threats)
             }
             self.alerts.append(alert)
             
@@ -71,7 +86,7 @@ class BlueGuard:
         return threats
     
     async def analyze_interaction_log(self, interactions: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze entire interaction log for security threats"""
+        """Analyze entire interaction log for security threats including A2A threats"""
         total_threats = 0
         all_threats = []
         
@@ -80,6 +95,12 @@ class BlueGuard:
             total_threats += len(threats)
             all_threats.extend(threats)
         
+        # Detect multi-agent attack chains
+        attack_chains = self.a2a_detector.detect_multi_agent_attack_chains(interactions)
+        
+        # Get A2A threat summary
+        a2a_summary = self.a2a_detector.get_a2a_threat_summary()
+        
         # Generate report
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -87,10 +108,14 @@ class BlueGuard:
             "total_threats": total_threats,
             "security_events": len(self.security_events),
             "alerts": len(self.alerts),
+            "cross_agent_threats": len(self.cross_agent_threats),
+            "multi_agent_attack_chains": len(attack_chains),
             "threats_by_type": self._count_threats_by_type(all_threats),
             "threats_by_agent": self._count_threats_by_agent(interactions),
+            "a2a_threat_summary": a2a_summary,
             "events": self.security_events,
-            "alerts": self.alerts
+            "alerts": self.alerts,
+            "attack_chains": attack_chains
         }
         
         return report
