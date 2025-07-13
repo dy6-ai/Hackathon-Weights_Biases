@@ -1,46 +1,52 @@
 """
-Weather Agent using Mock A2A SDK
+Weather Agent using Real A2A SDK
 Provides weather information through A2A framework
 """
 
-from src.a2a_sdk_mock import Agent, Tool, ToolCall
+from src.a2a_sdk import Agent, Tool, ToolCall, create_tool
 from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 class WeatherAgent(Agent):
-    """Weather agent for providing weather information using A2A SDK"""
+    """Weather agent for providing weather information using Real A2A SDK"""
     
     def __init__(self):
+        tools = [
+            create_tool(
+                name="get_weather",
+                description="Get current weather for a city",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string", "description": "City name"}
+                    },
+                    "required": ["city"]
+                }
+            ),
+            create_tool(
+                name="get_forecast",
+                description="Get weather forecast for a city",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string", "description": "City name"}
+                    },
+                    "required": ["city"]
+                }
+            )
+        ]
+        
         super().__init__(
             name="weather_agent",
             description="Provides weather information for cities",
-            tools=[
-                Tool(
-                    name="get_weather",
-                    description="Get current weather for a city",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "city": {"type": "string", "description": "City name"}
-                        },
-                        "required": ["city"]
-                    }
-                ),
-                Tool(
-                    name="get_forecast",
-                    description="Get weather forecast for a city",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "city": {"type": "string", "description": "City name"}
-                        },
-                        "required": ["city"]
-                    }
-                )
-            ]
+            tools=tools
         )
+        
+        # Register tool handlers
+        self.register_tool_handler("get_weather", self.get_weather)
+        self.register_tool_handler("get_forecast", self.get_forecast)
     
     async def get_weather(self, tool_call: ToolCall) -> str:
         """Get current weather for a city"""

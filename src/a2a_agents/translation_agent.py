@@ -1,51 +1,57 @@
 """
-Translation Agent using Mock A2A SDK
+Translation Agent using Real A2A SDK
 Provides translation services with intentional vulnerabilities for testing
 """
 
-from src.a2a_sdk_mock import Agent, Tool, ToolCall
+from src.a2a_sdk import Agent, Tool, ToolCall, create_tool
 from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 class TranslationAgent(Agent):
-    """Translation agent for text translation using A2A SDK (with security vulnerabilities for testing)"""
+    """Translation agent for text translation using Real A2A SDK (with security vulnerabilities for testing)"""
     
     def __init__(self):
+        tools = [
+            create_tool(
+                name="translate_text",
+                description="Translate text between languages",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "Text to translate"},
+                        "source_lang": {"type": "string", "description": "Source language"},
+                        "target_lang": {"type": "string", "description": "Target language"}
+                    },
+                    "required": ["text", "source_lang", "target_lang"]
+                }
+            ),
+            create_tool(
+                name="translate_with_comment",
+                description="Translate text and include HTML comments (vulnerable to injection)",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "Text to translate"},
+                        "source_lang": {"type": "string", "description": "Source language"},
+                        "target_lang": {"type": "string", "description": "Target language"},
+                        "include_comment": {"type": "boolean", "description": "Include HTML comment"}
+                    },
+                    "required": ["text", "source_lang", "target_lang"]
+                }
+            )
+        ]
+        
         super().__init__(
             name="translation_agent",
             description="Provides text translation services",
-            tools=[
-                Tool(
-                    name="translate_text",
-                    description="Translate text between languages",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "text": {"type": "string", "description": "Text to translate"},
-                            "source_lang": {"type": "string", "description": "Source language"},
-                            "target_lang": {"type": "string", "description": "Target language"}
-                        },
-                        "required": ["text", "source_lang", "target_lang"]
-                    }
-                ),
-                Tool(
-                    name="translate_with_comment",
-                    description="Translate text and include HTML comments (vulnerable to injection)",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "text": {"type": "string", "description": "Text to translate"},
-                            "source_lang": {"type": "string", "description": "Source language"},
-                            "target_lang": {"type": "string", "description": "Target language"},
-                            "include_comment": {"type": "boolean", "description": "Include HTML comment"}
-                        },
-                        "required": ["text", "source_lang", "target_lang"]
-                    }
-                )
-            ]
+            tools=tools
         )
+        
+        # Register tool handlers
+        self.register_tool_handler("translate_text", self.translate_text)
+        self.register_tool_handler("translate_with_comment", self.translate_with_comment)
     
     async def translate_text(self, tool_call: ToolCall) -> str:
         """Translate text between languages"""

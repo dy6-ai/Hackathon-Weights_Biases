@@ -1,72 +1,80 @@
 """
-Math Agent using Mock A2A SDK
+Math Agent using Real A2A SDK
 Provides mathematical operations through A2A framework
 """
 
-from src.a2a_sdk_mock import Agent, Tool, ToolCall
+from src.a2a_sdk import Agent, Tool, ToolCall, create_tool
 from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 class MathAgent(Agent):
-    """Math agent for performing mathematical operations using A2A SDK"""
+    """Math agent for performing mathematical operations using Real A2A SDK"""
     
     def __init__(self):
+        tools = [
+            create_tool(
+                name="add",
+                description="Add two numbers",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "number", "description": "First number"},
+                        "b": {"type": "number", "description": "Second number"}
+                    },
+                    "required": ["a", "b"]
+                }
+            ),
+            create_tool(
+                name="subtract",
+                description="Subtract two numbers",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "number", "description": "First number"},
+                        "b": {"type": "number", "description": "Second number"}
+                    },
+                    "required": ["a", "b"]
+                }
+            ),
+            create_tool(
+                name="multiply",
+                description="Multiply two numbers",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "number", "description": "First number"},
+                        "b": {"type": "number", "description": "Second number"}
+                    },
+                    "required": ["a", "b"]
+                }
+            ),
+            create_tool(
+                name="divide",
+                description="Divide two numbers",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "number", "description": "First number"},
+                        "b": {"type": "number", "description": "Second number"}
+                    },
+                    "required": ["a", "b"]
+                }
+            )
+        ]
+        
         super().__init__(
             name="math_agent",
             description="Performs basic mathematical operations",
-            tools=[
-                Tool(
-                    name="add",
-                    description="Add two numbers",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "a": {"type": "number", "description": "First number"},
-                            "b": {"type": "number", "description": "Second number"}
-                        },
-                        "required": ["a", "b"]
-                    }
-                ),
-                Tool(
-                    name="subtract",
-                    description="Subtract two numbers",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "a": {"type": "number", "description": "First number"},
-                            "b": {"type": "number", "description": "Second number"}
-                        },
-                        "required": ["a", "b"]
-                    }
-                ),
-                Tool(
-                    name="multiply",
-                    description="Multiply two numbers",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "a": {"type": "number", "description": "First number"},
-                            "b": {"type": "number", "description": "Second number"}
-                        },
-                        "required": ["a", "b"]
-                    }
-                ),
-                Tool(
-                    name="divide",
-                    description="Divide two numbers",
-                    parameters={
-                        "type": "object",
-                        "properties": {
-                            "a": {"type": "number", "description": "First number"},
-                            "b": {"type": "number", "description": "Second number"}
-                        },
-                        "required": ["a", "b"]
-                    }
-                )
-            ]
+            tools=tools
         )
+        
+        # Register tool handlers
+        self.register_tool_handler("add", self.add)
+        self.register_tool_handler("subtract", self.subtract)
+        self.register_tool_handler("multiply", self.multiply)
+        self.register_tool_handler("divide", self.divide)
     
     async def add(self, tool_call: ToolCall) -> str:
         """Add two numbers"""

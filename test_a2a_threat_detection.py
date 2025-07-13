@@ -6,7 +6,7 @@ Demonstrates agent-to-agent threat detection with malicious data flow
 import asyncio
 import logging
 from pathlib import Path
-from src.real_a2a_mcp_server import RealA2AMCPServer
+from src.a2a_mcp_server import RealA2AMCPServer
 
 # Configure logging
 logging.basicConfig(
