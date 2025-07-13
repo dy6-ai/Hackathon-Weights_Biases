@@ -1,0 +1,25 @@
+# Agent-Sentinel Configuration
+agent_id: "test_agent"
+environment: "test"
+
+# Alerts configuration
+alerts:
+  enabled: false  # Disable alerts for testing
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "text"
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  capture_inputs: true
+  capture_outputs: true
+  capture_exceptions: true
+
+# Report configuration
+reports:
+  enabled: true
+  format: "json"
+  output_dir: "./reports" 
